@@ -1,0 +1,35 @@
+# playbook.yml
+- name: Deploy Dockerized Web Application
+  hosts: remote_server
+  become: yes
+  vars:
+    nginx_template_path: templates/nginx.conf.j2
+    nginx_conf_dest: /path/to/nginx.conf
+
+  tasks:
+    - name: Copy application files
+      copy:
+        src: ./app/
+        dest: /path/to/remote/app/
+
+    - name: Copy Docker Compose file
+      copy:
+        src: ./docker-compose.yml
+        dest: /path/to/remote/docker-compose.yml
+
+    - name: Generate Nginx configuration from template
+      template:
+        src: "{{ nginx_template_path }}"
+        dest: "{{ nginx_conf_dest }}"
+      notify: Restart Nginx
+
+    - name: Launch Docker Compose
+      command: docker-compose -f /path/to/remote/docker-compose.yml up -d
+      args:
+        chdir: /path/to/remote
+
+  handlers:
+    - name: Restart Nginx
+      command: docker-compose -f /path/to/remote/docker-compose.yml restart nginx
+      args:
+        chdir: /path/to/remote
